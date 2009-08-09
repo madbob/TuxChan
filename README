@@ -1,0 +1,33 @@
+TuxChan - A 4chan desktop client
+===============================================================================
+
+TuxChan is a desktop client for 4chan. 4chan is described as:
+
+  4chan is a simple image-based bulletin board where anyone can post comments
+  and share images.
+                -- from http://4chan.org
+
+With this application you can follow images stream from your preferred
+channels, and be notified about new contents in a more efficient way than the
+web interface.
+
+TuxChan homepage is available at: http://tuxchan.barberaware.org/
+
+REQUIREMENTS
+-------------------------------------------------------------------------------
+TuxChan depends on:
+
+  - Clutter >= 1.0.0
+
+INSTALLATION
+-------------------------------------------------------------------------------
+./configure
+make
+sudo make install
+
+COPYRIGHT AND LICENSING
+-------------------------------------------------------------------------------
+TuxChan is released under the terms of the GNU General Public License,
+version 3 or, at your option, any later version.
+
+TuxChan is Copyright (C) 2009  Roberto Guido.
