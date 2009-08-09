@@ -64,6 +64,7 @@ typedef struct {
 
     gchar           *fullsize_filepath;
     gchar           *fullsize_uri;
+    ClutterActor    *fullsize_image;
     ClutterActor    *fullsize_stage;
 
     gchar           *thread_url;
@@ -463,6 +464,42 @@ static void clear_container (ClutterActor *container)
     g_list_free (children);
 }
 
+static void resize_fullsize_stage (ChanImage *img, gfloat width, gfloat height)
+{
+    clutter_actor_set_size (img->fullsize_image, width, height);
+    clutter_actor_set_size (img->fullsize_stage, width + 30, height);
+}
+
+static gboolean enlarge_fullsize_image (ClutterActor *actor, ClutterEvent *event, ChanImage *img)
+{
+    gfloat width;
+    gfloat height;
+
+    clutter_actor_get_size (img->fullsize_image, &width, &height);
+    if (width > 3000 || height > 3000)
+        return TRUE;
+
+    width = (width * 10) / 9;
+    height = (height * 10) / 9;
+    resize_fullsize_stage (img, width, height);
+    return TRUE;
+}
+
+static gboolean shrink_fullsize_image (ClutterActor *actor, ClutterEvent *event, ChanImage *img)
+{
+    gfloat width;
+    gfloat height;
+
+    clutter_actor_get_size (img->fullsize_image, &width, &height);
+    if (width < 150 || height < 150)
+        return TRUE;
+
+    width = (width * 9) / 10;
+    height = (height * 9) / 10;
+    resize_fullsize_stage (img, width, height);
+    return TRUE;
+}
+
 static gboolean render_fullsize (ChanImage *img)
 {
     gfloat width;
@@ -473,6 +510,7 @@ static gboolean render_fullsize (ChanImage *img)
     if (image == NULL)
         return FALSE;
 
+    img->fullsize_image = image;
     clear_container (img->fullsize_stage);
 
     clutter_actor_get_size (image, &width, &height);
@@ -482,8 +520,8 @@ static gboolean render_fullsize (ChanImage *img)
 
     do_icon_button (img->fullsize_stage, SaveIcon, 2, 2, G_CALLBACK (permanent_save_img), img);
     do_icon_button (img->fullsize_stage, WebsiteIcon, 2, 32, G_CALLBACK (open_webpage), img);
-    // do_icon_button (img->fullsize_stage, EnlargeIcon, 2, 62, G_CALLBACK (enlarge_fullsize_image), img);
-    // do_icon_button (img->fullsize_stage, ShrinkIcon, 2, 92, G_CALLBACK (shrink_fullsize_image), img);
+    do_icon_button (img->fullsize_stage, EnlargeIcon, 2, 62, G_CALLBACK (enlarge_fullsize_image), img);
+    do_icon_button (img->fullsize_stage, ShrinkIcon, 2, 92, G_CALLBACK (shrink_fullsize_image), img);
 
     clutter_actor_show_all (img->fullsize_stage);
     return TRUE;
