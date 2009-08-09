@@ -33,7 +33,7 @@
 #define WINDOW_WIDTH                300
 #define WINDOW_HEIGHT               700
 
-#define FULLSIZE_ORIGINAL_WIDTH     300
+#define FULLSIZE_ORIGINAL_WIDTH     400
 #define FULLSIZE_ORIGINAL_HEIGHT    100
 
 #define MAX_IMAGE_SIZE              252
@@ -318,14 +318,18 @@ static ClutterActor* texture_from_file (const gchar *path, gboolean delete)
     return image;
 }
 
-static ClutterActor* icon_from_xmp (char **data)
+static ClutterActor* icon_from_xmp (ClutterActor *existing, char **data)
 {
     GdkPixbuf *pixbuf;
     ClutterActor *ret;
 
     pixbuf = gdk_pixbuf_new_from_xpm_data ((const char**) data);
 
-    ret = clutter_texture_new ();
+    if (existing == NULL)
+        ret = clutter_texture_new ();
+    else
+        ret = existing;
+
     clutter_texture_set_from_rgb_data (CLUTTER_TEXTURE (ret),
                                        gdk_pixbuf_get_pixels (pixbuf),
                                        gdk_pixbuf_get_has_alpha (pixbuf),
@@ -334,6 +338,8 @@ static ClutterActor* icon_from_xmp (char **data)
                                        gdk_pixbuf_get_rowstride (pixbuf),
                                        gdk_pixbuf_get_has_alpha (pixbuf) ? 4 : 3,
                                        0, NULL);
+
+    g_object_unref (pixbuf);
     return ret;
 }
 
@@ -341,7 +347,7 @@ static ClutterActor* do_icon_button (ClutterActor *parent, char **image, gfloat 
 {
     ClutterActor *ret;
 
-    ret = icon_from_xmp (image);
+    ret = icon_from_xmp (NULL, image);
     clutter_container_add_actor (CLUTTER_CONTAINER (parent), ret);
     clutter_actor_set_fixed_position_set (ret, TRUE);
     clutter_actor_set_position (ret, x, y);
@@ -414,10 +420,12 @@ static gboolean permanent_save_img (ClutterActor *actor, ClutterEvent *event, Ch
     folder_path = g_strdup_printf ("%s/tuxchan/%s", g_get_home_dir (), img->parent->name);
     path = check_and_create_folder (folder_path, FALSE);
 
-    if (path == NULL) {
+    if (path != NULL) {
         file_path = g_strdup_printf ("%s/%s", folder_path, strrchr (img->fullsize_uri, '/') + 1);
         copy_file (img->fullsize_filepath, file_path);
         g_free (file_path);
+
+        icon_from_xmp (actor, DoneIcon);
     }
 
     g_free (folder_path);
@@ -502,7 +510,7 @@ static void fullsize_image_downloaded (GObject *source_object, GAsyncResult *res
     op = (AsyncOp*) userdata;
 
     op->img->fullsize_filepath = dump_async_contents (op->src, res, "/tmp");
-    if (op->img->fullsize_filepath != NULL || render_fullsize (op->img) == FALSE)
+    if (op->img->fullsize_filepath == NULL || render_fullsize (op->img) == FALSE)
         fullsize_error_notification (op->img);
 
     g_object_unref (op->src);
