@@ -1,0 +1,6 @@
+2009-08-18 - 0.1.0
+	- auto fetch contents
+	- choose 4chan channel to listen
+	- full-size image download
+	- zooming on full-size view
+	- save of preferred images in home folder

@@ -1024,6 +1024,10 @@ static ClutterActor* init_images_section (MyData *data)
     do_icon_button (images, ConfigIcon, 2, WINDOW_HEIGHT - 60, G_CALLBACK (switch_config), data);
     do_icon_button (images, UploadIcon, 2, WINDOW_HEIGHT - 30, G_CALLBACK (switch_uploads), data);
 
+    /**
+        TODO    Add a "away mode" where all images are fetched and saved in separate store
+    */
+
     status = clutter_text_new_full (STATUS_FONT, "", &text_color);
     clutter_container_add_actor (CLUTTER_CONTAINER (images), status);
     clutter_actor_set_fixed_position_set (status, TRUE);
