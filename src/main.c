@@ -148,6 +148,7 @@ typedef struct {
 typedef struct {
     Channel         *channels;
     gboolean        sync_in_progress;
+    gboolean        away_mode;
     gchar           *tmp_path;
 
     ImagesSection   images;
@@ -216,6 +217,7 @@ static gboolean read_conf (MyData *conf)
     if (conf->tmp_path == NULL)
         return FALSE;
 
+    conf->away_mode = FALSE;
     conf->channels = Enabled;
     return TRUE;
 }
@@ -409,6 +411,28 @@ gboolean copy_file (const gchar *from, const gchar *to) {
 
     g_object_unref (src);
     g_object_unref (dest);
+    return ret;
+}
+
+static gchar* away_mode_dest_folder (ChanImage *img)
+{
+    gchar *thread;
+    gchar *sep;
+    gchar *ret;
+
+    /*
+        Files in "away mode" are saved as "channelname_IDofthethread", so can be retrieved as
+        http://zip.4chan.org/channelname/res/IDofthethread.html
+    */
+
+    thread = g_path_get_basename (img->thread_url);
+
+    sep = strrchr (thread, '.');
+    if (sep != NULL)
+        *sep = '\0';
+
+    ret = g_strdup_printf ("%s/tuxchan/away/%s_%s", g_get_home_dir (), img->parent->name, thread);
+    g_free (thread);
     return ret;
 }
 
@@ -744,6 +768,7 @@ static void schedule_image_placing (ChanImage *image, MyData *data)
 
 static void thumb_image_downloaded (GObject *source_object, GAsyncResult *res, gpointer userdata)
 {
+    gchar *away_path;
     AsyncOp *op;
     ChanImage *img;
 
@@ -762,6 +787,16 @@ static void thumb_image_downloaded (GObject *source_object, GAsyncResult *res, g
 
         img->filepath = dump_async_contents (op->src, res, op->data->tmp_path);
         if (img->filepath != NULL) {
+            /*
+                If "away mode" is active image is copied before rendering, because rendering
+                destroyes the file
+            */
+            if (op->data->away_mode == TRUE) {
+                away_path = away_mode_dest_folder (img);
+                copy_file (img->filepath, away_path);
+                g_free (away_path);
+            }
+
             add_image_in_cache (img, op->data);
             schedule_image_placing (img, op->data);
         }
@@ -1012,6 +1047,25 @@ static gboolean switch_images (ClutterActor *actor, ClutterEvent *event, MyData 
     return TRUE;
 }
 
+static gboolean switch_away_on_off (ClutterActor *actor, ClutterEvent *event, MyData *data)
+{
+    gchar *path;
+
+    data->away_mode = (data->away_mode == FALSE);
+
+    if (data->away_mode == TRUE) {
+        path = g_strdup_printf ("%s/tuxchan/away", g_get_home_dir ());
+        check_and_create_folder (path, FALSE);
+        g_free (path);
+
+        icon_from_xmp (actor, AwayActiveIcon);
+    }
+    else
+        icon_from_xmp (actor, AwayIcon);
+
+    return TRUE;
+}
+
 static ClutterActor* init_images_section (MyData *data)
 {
     ClutterActor *images;
@@ -1021,6 +1075,7 @@ static ClutterActor* init_images_section (MyData *data)
     images = clutter_group_new ();
     data->images.images_panel = images;
 
+    do_icon_button (images, AwayIcon, 2, WINDOW_HEIGHT - 90, G_CALLBACK (switch_away_on_off), data);
     do_icon_button (images, ConfigIcon, 2, WINDOW_HEIGHT - 60, G_CALLBACK (switch_config), data);
     do_icon_button (images, UploadIcon, 2, WINDOW_HEIGHT - 30, G_CALLBACK (switch_uploads), data);
 
@@ -1031,8 +1086,8 @@ static ClutterActor* init_images_section (MyData *data)
     status = clutter_text_new_full (STATUS_FONT, "", &text_color);
     clutter_container_add_actor (CLUTTER_CONTAINER (images), status);
     clutter_actor_set_fixed_position_set (status, TRUE);
-    clutter_actor_set_position (status, 7, WINDOW_HEIGHT - 90);
-    clutter_actor_set_rotation (status, CLUTTER_Z_AXIS, -90, 0, 0, 0);
+    clutter_actor_set_position (status, 9, WINDOW_HEIGHT - 100);
+    clutter_actor_set_rotation (status, CLUTTER_Z_AXIS, -100, 0, 0, 0);
     data->images.status = status;
 
     return images;

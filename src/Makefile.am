@@ -18,10 +18,10 @@ common_ldadd = \
 
 bin_PROGRAMS = tuxchan
 
-tuxchan_h = \
-	icons.h \
-	$(NULL)
+# tuxchan_h = \
+# 	icons.h \
+# 	$(NULL)
 
-tuxchan_SOURCES = main.c
+tuxchan_SOURCES = main.c icons.h
 tuxchan_CFLAGS = $(common_cflags)
 tuxchan_LDADD = $(common_ldadd)
