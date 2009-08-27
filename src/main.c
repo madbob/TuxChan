@@ -17,17 +17,8 @@
 
 #define _GNU_SOURCE
 
-#include <stdlib.h>
-#include <string.h>
-#include <unistd.h>
-#include <sys/stat.h>
-#include <sys/types.h>
-
-#include <glib.h>
-#include <gio/gio.h>
-#include <gdk-pixbuf/gdk-pixbuf.h>
-#include <clutter/clutter.h>
-
+#include "common.h"
+#include "channel-selector.h"
 #include "icons.h"
 
 #define WINDOW_WIDTH                300
@@ -38,20 +29,10 @@
 
 #define MAX_IMAGE_SIZE              252
 #define STATUS_FONT                 "Mono Bold 10px"
-#define CONF_FONT                   "Mono Bold 15px"
 #define STAGE_COLOR                 {0x00, 0x00, 0x00, 0xFF}
-#define TEXT_COLOR                  {0x33, 0xFF, 0x33, 0xFF}
 #define SELECTED_IMAGE_COLOR        TEXT_COLOR
-#define ACTIVE_CHANNEL_COLOR        TEXT_COLOR
-#define UNACTIVE_CHANNEL_COLOR      {0x11, 0x77, 0x11, 0xFF}
 
 #define REFRESH_TIMEOUT             30000
-
-typedef struct {
-    int             category;
-    const gchar     *name;
-    gboolean        enabled;
-} Channel;
 
 typedef struct {
     Channel         *parent;
@@ -1079,10 +1060,6 @@ static ClutterActor* init_images_section (MyData *data)
     do_icon_button (images, ConfigIcon, 2, WINDOW_HEIGHT - 60, G_CALLBACK (switch_config), data);
     do_icon_button (images, UploadIcon, 2, WINDOW_HEIGHT - 30, G_CALLBACK (switch_uploads), data);
 
-    /**
-        TODO    Add a "away mode" where all images are fetched and saved in separate store
-    */
-
     status = clutter_text_new_full (STATUS_FONT, "", &text_color);
     clutter_container_add_actor (CLUTTER_CONTAINER (images), status);
     clutter_actor_set_fixed_position_set (status, TRUE);
@@ -1093,66 +1070,20 @@ static ClutterActor* init_images_section (MyData *data)
     return images;
 }
 
-static void enable_channel (ClutterActor *label, ClutterEvent *event, Channel *channel)
-{
-    static ClutterColor enabled_text_color = ACTIVE_CHANNEL_COLOR;
-    static ClutterColor disabled_text_color = UNACTIVE_CHANNEL_COLOR;
-
-    channel->enabled = (channel->enabled == FALSE);
-
-    if (channel->enabled == TRUE)
-        clutter_text_set_color (CLUTTER_TEXT (label), &enabled_text_color);
-    else
-        clutter_text_set_color (CLUTTER_TEXT (label), &disabled_text_color);
-}
-
 static ClutterActor* init_config_section (MyData *data)
 {
-    register int i;
-    int row;
-    gfloat vertical_offset;
-    gfloat width;
-    gfloat orizzontal_offsets [10];
-    gchar chan_label [50];
     ClutterActor *configs;
-    ClutterActor *label;
-    static ClutterColor enabled_text_color = ACTIVE_CHANNEL_COLOR;
-    static ClutterColor disabled_text_color = UNACTIVE_CHANNEL_COLOR;
-    Channel *chan;
+    ClutterActor *selector;
 
     configs = clutter_group_new ();
     data->config.config_panel = configs;
-    vertical_offset = 15;
 
-    for (i = 0; i < 10; i++)
-        orizzontal_offsets [i] = 10;
-
-    for (i = 0; data->channels [i].name != NULL; i++) {
-        chan = &(data->channels [i]);
-
-        row = chan->category;
-        if (row >= 10) {
-            g_warning ("No room for so many categories!");
-            continue;
-        }
-
-        snprintf (chan_label, 50, "/%s", chan->name);
-
-        if (chan->enabled == TRUE)
-            label = clutter_text_new_full (CONF_FONT, chan_label, &enabled_text_color);
-        else
-            label = clutter_text_new_full (CONF_FONT, chan_label, &disabled_text_color);
-
-        clutter_container_add_actor (CLUTTER_CONTAINER (configs), label);
-        clutter_actor_set_fixed_position_set (label, TRUE);
-        clutter_actor_set_position (label, orizzontal_offsets [row], (row * vertical_offset) + 20);
-
-        clutter_actor_get_size (label, &width, NULL);
-        orizzontal_offsets [row] += (width + 5);
-
-        clutter_actor_set_reactive (label, TRUE);
-        g_signal_connect (G_OBJECT (label), "button-press-event", G_CALLBACK (enable_channel), chan);
-    }
+    selector = channel_selector_new ();
+    clutter_actor_set_position (selector, 0, 0);
+    channel_selector_enable_on_select (CHANNEL_SELECTOR (selector), TRUE);
+    channel_selector_set_channels (CHANNEL_SELECTOR (selector), data->channels);
+    clutter_container_add_actor (CLUTTER_CONTAINER (configs), selector);
+    clutter_actor_set_reactive (selector, TRUE);
 
     do_icon_button (configs, BackIcon, 2, WINDOW_HEIGHT - 30, G_CALLBACK (switch_images), data);
     return configs;
