@@ -27,6 +27,7 @@
 #include <glib.h>
 #include <gio/gio.h>
 #include <gdk-pixbuf/gdk-pixbuf.h>
+#include <gtk/gtk.h>
 #include <clutter/clutter.h>
 #include <libsoup/soup.h>
 #include <magic.h>

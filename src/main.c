@@ -20,6 +20,7 @@
 #include "common.h"
 #include "channel-selector.h"
 #include "editable-text.h"
+#include "file-selector.h"
 #include "icons.h"
 
 #define WINDOW_WIDTH                300
@@ -1043,7 +1044,7 @@ static void reset_upload_panel (MyData *data)
 {
     editable_text_go_standby (EDITABLE_TEXT (data->upload.subject));
     editable_text_go_standby (EDITABLE_TEXT (data->upload.text));
-    editable_text_go_standby (EDITABLE_TEXT (data->upload.file));
+    file_selector_go_standby (FILE_SELECTOR (data->upload.file));
 }
 
 static gboolean switch_images_reset_upload (ClutterActor *actor, ClutterEvent *event, MyData *data)
@@ -1221,13 +1222,13 @@ static gboolean upload_image (ClutterActor *actor, ClutterEvent *event, MyData *
         goto exit_func;
     }
 
-    if (editable_text_is_set (EDITABLE_TEXT (data->upload.file)) == FALSE) {
+    if (file_selector_is_set (FILE_SELECTOR (data->upload.file)) == FALSE) {
         g_warning ("Undefined target file to upload");
         goto exit_func;
     }
 
     uri = clutter_text_get_text (CLUTTER_TEXT (data->upload.file));
-    file = g_file_new_for_path (uri);
+    file = g_file_new_for_uri (uri);
 
     upload_info = g_new0 (UploadInfo, 1);
 
@@ -1291,7 +1292,7 @@ static ClutterActor* init_upload_section (MyData *data)
     clutter_container_add_actor (CLUTTER_CONTAINER (upload), text);
     data->upload.text = text;
 
-    file = editable_text_new (INPUT_FONT, "File", &enabled_text_color);
+    file = file_selector_new (INPUT_FONT, &enabled_text_color);
     clutter_actor_set_position (file, 20, height);
     clutter_actor_set_size (file, width, 25);
     clutter_text_set_max_length (CLUTTER_TEXT (file), 70);
@@ -1339,6 +1340,7 @@ int main (int argc, char **argv)
     MyData conf;
 
     g_thread_init (NULL);
+    gtk_init (&argc, &argv);
     clutter_init (&argc, &argv);
     g_set_application_name ("TuxChan");
 

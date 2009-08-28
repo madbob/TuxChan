@@ -24,9 +24,11 @@ tuxchan_SOURCES = \
     main.c \
     channel-selector.c \
     editable-text.c \
+    file-selector.c \
     icons.h \
     channel-selector.h \
-    editable-text.h
+    editable-text.h \
+    file-selector.h
 
 tuxchan_CFLAGS = $(common_cflags)
 tuxchan_LDADD = $(common_ldadd)
