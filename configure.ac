@@ -1,5 +1,5 @@
 m4_define([tuxchan_major_version], [0])
-m4_define([tuxchan_minor_version], [1])
+m4_define([tuxchan_minor_version], [2])
 m4_define([tuxchan_micro_version], [0])
 
 m4_define([tuxchan_version],

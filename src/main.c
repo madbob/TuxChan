@@ -1,4 +1,4 @@
-/*  tuxchan 0.1
+/*  tuxchan 0.2
  *  Copyright (C) 2009 Roberto -MadBob- Guido <madbob@users.barberaware.org>
  *
  *  This is free software; you can redistribute it and/or modify
