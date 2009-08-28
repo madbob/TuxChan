@@ -49,6 +49,7 @@ ClutterActor*   file_selector_new           (const gchar *font_name, const Clutt
 
 void            file_selector_go_standby    (FileSelector *selector);
 gboolean        file_selector_is_set        (FileSelector *selector);
+void            file_selector_notify_unset  (FileSelector *selector);
 
 G_END_DECLS
 

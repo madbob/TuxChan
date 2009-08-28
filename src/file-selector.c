@@ -17,6 +17,8 @@
 
 #include "file-selector.h"
 
+#define STANDBY_TEXT        "Click to choose a file"
+
 struct _FileSelectorPrivate
 {
     gboolean            is_standby;
@@ -82,13 +84,33 @@ ClutterActor* file_selector_new (const gchar *font_name, const ClutterColor *col
     return g_object_new (FILE_SELECTOR_TYPE, "font-name", font_name, "color", color, NULL);
 }
 
-void file_selector_go_standby (FileSelector *text)
+void file_selector_go_standby (FileSelector *selector)
 {
-    clutter_text_set_text (CLUTTER_TEXT (text), "Click to Choose a File");
-    text->priv->is_standby = TRUE;
+    clutter_text_set_text (CLUTTER_TEXT (selector), STANDBY_TEXT);
+    selector->priv->is_standby = TRUE;
 }
 
-gboolean file_selector_is_set (FileSelector *text)
+gboolean file_selector_is_set (FileSelector *selector)
 {
-    return (text->priv->is_standby == FALSE);
+    return (selector->priv->is_standby == FALSE);
+}
+
+static gboolean reset_notification (gpointer sel)
+{
+    FileSelector *selector;
+
+    selector = (FileSelector*) sel;
+    if (selector->priv->is_standby == TRUE)
+        clutter_text_set_text (CLUTTER_TEXT (selector), STANDBY_TEXT);
+
+    return FALSE;
+}
+
+void file_selector_notify_unset (FileSelector *selector)
+{
+    if (file_selector_is_set (selector) == TRUE)
+        return;
+
+    clutter_text_set_text (CLUTTER_TEXT (selector), "You need to choose a file to upload");
+    g_timeout_add_seconds (2, reset_notification, selector);
 }

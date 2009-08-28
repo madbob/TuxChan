@@ -41,6 +41,7 @@
 typedef struct {
     int             category;
     const gchar     *name;
+    const gchar     *upload_server;
     gboolean        enabled;
 } Channel;
 

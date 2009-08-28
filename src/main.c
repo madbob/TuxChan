@@ -68,56 +68,56 @@ typedef struct {
 } ImagesSection;
 
 Channel     Enabled [] = {
-    {   0,      "a",        FALSE },
-    {   0,      "c",        FALSE },
-    {   0,      "w",        FALSE },
-    {   0,      "m",        FALSE },
-    {   0,      "cgl",      FALSE },
-    {   0,      "cm",       FALSE },
-    {   0,      "f",        FALSE },
-    {   0,      "n",        FALSE },
-    {   0,      "jp",       FALSE },
+    {   0,      "a",    "http://bin.4chan.org/a/imgboard.php",      FALSE },
+    {   0,      "c",    "http://bin.4chan.org/c/imgboard.php",      FALSE },
+    {   0,      "w",    "http://bin.4chan.org/w/imgboard.php",      FALSE },
+    {   0,      "m",    "http://bin.4chan.org/m/imgboard.php",      FALSE },
+    {   0,      "cgl",  "http://bin.4chan.org/cgl/imgboard.php",    FALSE },
+    {   0,      "cm",   "http://bin.4chan.org/cm/imgboard.php",     FALSE },
+    {   0,      "f",    "http://nov.4chan.org/f/up.php",            FALSE },
+    {   0,      "n",    "http://bin.4chan.org/n/imgboard.php",      FALSE },
+    {   0,      "jp",   "http://bin.4chan.org/jp/imgboard.php",     FALSE },
 
-    {   1,      "v",        FALSE },
-    {   1,      "co",       FALSE },
-    {   1,      "g",        FALSE },
-    {   1,      "tv",       FALSE },
-    {   1,      "k",        FALSE },
-    {   1,      "o",        FALSE },
-    {   1,      "an",       FALSE },
-    {   1,      "tg",       FALSE },
-    {   1,      "sp",       FALSE },
+    {   1,      "v",    "http://bin.4chan.org/v/imgboard.php",      FALSE },
+    {   1,      "co",   "http://bin.4chan.org/co/imgboard.php",     FALSE },
+    {   1,      "g",    "http://bin.4chan.org/g/imgboard.php",      FALSE },
+    {   1,      "tv",   "http://bin.4chan.org/tv/imgboard.php",     FALSE },
+    {   1,      "k",    "http://bin.4chan.org/k/imgboard.php",      FALSE },
+    {   1,      "o",    "http://bin.4chan.org/o/imgboard.php",      FALSE },
+    {   1,      "an",   "http://bin.4chan.org/an/imgboard.php",     FALSE },
+    {   1,      "tg",   "http://bin.4chan.org/tg/imgboard.php",     FALSE },
+    {   1,      "sp",   "http://bin.4chan.org/sp/imgboard.php",     FALSE },
 
-    {   2,      "i",        FALSE },
-    {   2,      "po",       FALSE },
-    {   2,      "p",        FALSE },
-    {   2,      "ck",       FALSE },
-    {   2,      "ic",       FALSE },
-    {   2,      "wg",       FALSE },
-    {   2,      "mu",       FALSE },
-    {   2,      "fa",       FALSE },
-    {   2,      "toy",      FALSE },
+    {   2,      "i",    "http://nov.4chan.org/i/imgboard.php",      FALSE },
+    {   2,      "po",   "http://bin.4chan.org/po/imgboard.php",     FALSE },
+    {   2,      "p",    "http://bin.4chan.org/p/imgboard.php",      FALSE },
+    {   2,      "ck",   "http://bin.4chan.org/ck/imgboard.php",     FALSE },
+    {   2,      "ic",   "http://nov.4chan.org/ic/imgboard.php",     FALSE },
+    {   2,      "wg",   "http://tmp.4chan.org/wg/imgboard.php",     FALSE },
+    {   2,      "mu",   "http://bin.4chan.org/mu/imgboard.php",     FALSE },
+    {   2,      "fa",   "http://bin.4chan.org/fa/imgboard.php",     FALSE },
+    {   2,      "toy",  "http://bin.4chan.org/toy/imgboard.php",    FALSE },
 
-    {   3,      "s",        FALSE },
-    {   3,      "hc",       FALSE },
-    {   3,      "h",        FALSE },
-    {   3,      "e",        FALSE },
-    {   3,      "u",        FALSE },
-    {   3,      "d",        FALSE },
-    {   3,      "y",        FALSE },
-    {   3,      "t",        FALSE },
+    {   3,      "s",    "http://nov.4chan.org/s/imgboard.php",      FALSE },
+    {   3,      "hc",   "http://nov.4chan.org/hc/imgboard.php",     FALSE },
+    {   3,      "h",    "http://nov.4chan.org/h/imgboard.php",      FALSE },
+    {   3,      "e",    "http://tmp.4chan.org/e/imgboard.php",      FALSE },
+    {   3,      "u",    "http://tmp.4chan.org/u/imgboard.php",      FALSE },
+    {   3,      "d",    "http://tmp.4chan.org/d/imgboard.php",      FALSE },
+    {   3,      "y",    "http://tmp.4chan.org/y/imgboard.php",      FALSE },
+    {   3,      "t",    "http://nov.4chan.org/t/imgboard.php",      FALSE },
 
-    {   4,      "trv",      FALSE },
-    {   4,      "fit",      FALSE },
-    {   4,      "x",        FALSE },
+    {   4,      "trv",  "http://bin.4chan.org/trv/imgboard.php",    FALSE },
+    {   4,      "fit",  "http://bin.4chan.org/fit/imgboard.php",    FALSE },
+    {   4,      "x",    "http://bin.4chan.org/x/imgboard.php",      FALSE },
 
-    {   5,      "b",        FALSE },
-    {   5,      "gif",      FALSE },
-    {   5,      "r",        FALSE },
-    {   5,      "hr",       FALSE },
-    {   5,      "r9k",      FALSE },
+    {   5,      "b",    "http://dat.4chan.org/b/imgboard.php",      FALSE },
+    {   5,      "gif",  "http://nov.4chan.org/gif/imgboard.php",    FALSE },
+    {   5,      "r",    "http://nov.4chan.org/r/imgboard.php",      FALSE },
+    {   5,      "hr",   "http://tmp.4chan.org/hr/imgboard.php",     FALSE },
+    {   5,      "r9k",  "http://dat.4chan.org/r9k/imgboard.php",    FALSE },
 
-    {   -1,     NULL,       FALSE }
+    {   -1,     NULL,   NULL,                                       FALSE }
 };
 
 typedef struct {
@@ -1042,6 +1042,11 @@ static gboolean switch_images (ClutterActor *actor, ClutterEvent *event, MyData 
 
 static void reset_upload_panel (MyData *data)
 {
+    /*
+        Selector is not reset from one upload to the other, the previous choice is automatically
+        the default for the next
+    */
+
     editable_text_go_standby (EDITABLE_TEXT (data->upload.subject));
     editable_text_go_standby (EDITABLE_TEXT (data->upload.text));
     file_selector_go_standby (FILE_SELECTOR (data->upload.file));
@@ -1089,7 +1094,7 @@ static ClutterActor* init_images_section (MyData *data)
     clutter_container_add_actor (CLUTTER_CONTAINER (images), status);
     clutter_actor_set_fixed_position_set (status, TRUE);
     clutter_actor_set_position (status, 9, WINDOW_HEIGHT - 100);
-    clutter_actor_set_rotation (status, CLUTTER_Z_AXIS, -100, 0, 0, 0);
+    clutter_actor_set_rotation (status, CLUTTER_Z_AXIS, -90, 0, 0, 0);
     data->images.status = status;
 
     return images;
@@ -1183,22 +1188,15 @@ static void upload_image_ready (GObject *source_object, GAsyncResult *res, gpoin
 
     soup_multipart_append_form_string (part, "MAX_FILE_SIZE", "8388608");
     soup_multipart_append_form_string (part, "mode", "regist");
-    soup_multipart_append_form_string (part, "name", "");
-    soup_multipart_append_form_string (part, "email", "");
     soup_multipart_append_form_string (part, "pwd", "foo");
 
     if (upload_info->subject != NULL)
         soup_multipart_append_form_string (part, "sub", upload_info->subject);
-    else
-        soup_multipart_append_form_string (part, "sub", "");
 
     if (upload_info->comment != NULL)
         soup_multipart_append_form_string (part, "com", upload_info->comment);
-    else
-        soup_multipart_append_form_string (part, "com", "");
 
-    uri = g_strdup_printf ("http://nov.4chan.org/%s/imgboard.php", upload_info->chan->name);
-    message = soup_form_request_new_from_multipart (uri, part);
+    message = soup_form_request_new_from_multipart (upload_info->chan->upload_server, part);
 
     session = soup_session_async_new ();
     g_object_set (G_OBJECT (session), SOUP_SESSION_USER_AGENT, "TuxChan", NULL);
@@ -1207,7 +1205,6 @@ static void upload_image_ready (GObject *source_object, GAsyncResult *res, gpoin
     soup_multipart_free (part);
     g_free (data);
     g_free (mimetype);
-    g_free (uri);
     g_free (filename);
 }
 
@@ -1219,12 +1216,14 @@ static gboolean upload_image (ClutterActor *actor, ClutterEvent *event, MyData *
 
     if (channel_selector_get_selected (CHANNEL_SELECTOR (data->upload.selector)) == NULL) {
         g_warning ("Undefined target channel");
-        goto exit_func;
+        channel_selector_notify_unset (CHANNEL_SELECTOR (data->upload.selector));
+        return TRUE;
     }
 
     if (file_selector_is_set (FILE_SELECTOR (data->upload.file)) == FALSE) {
         g_warning ("Undefined target file to upload");
-        goto exit_func;
+        file_selector_notify_unset (FILE_SELECTOR (data->upload.file));
+        return TRUE;
     }
 
     uri = clutter_text_get_text (CLUTTER_TEXT (data->upload.file));
@@ -1245,8 +1244,6 @@ static gboolean upload_image (ClutterActor *actor, ClutterEvent *event, MyData *
     upload_info->chan = channel_selector_get_selected (CHANNEL_SELECTOR (data->upload.selector));
 
     g_file_load_contents_async (file, NULL, upload_image_ready, upload_info);
-
-exit_func:
     switch_images_reset_upload (actor, event, data);
     return TRUE;
 }

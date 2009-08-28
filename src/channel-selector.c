@@ -19,9 +19,10 @@
 
 struct _ChannelSelectorPrivate
 {
-    ClutterActor    *main;
-    GList           *options;
-    gboolean        enable_on_select;
+    ClutterActor        *main;
+    GList               *options;
+    gboolean            enable_on_select;
+    ClutterTimeline     *notify_animation;
 };
 
 typedef struct {
@@ -122,6 +123,34 @@ ClutterActor* channel_selector_new () {
     return g_object_new (CHANNEL_SELECTOR_TYPE, NULL);
 }
 
+static void set_color_to_all (ChannelSelector *selector, ClutterColor *color)
+{
+    GList *children;
+    GList *iter;
+    ClutterActor *child;
+
+    children = clutter_container_get_children (CLUTTER_CONTAINER (selector->priv->main));
+
+    for (iter = children; iter; iter = g_list_next (iter)) {
+        child = (ClutterActor*) iter->data;
+        clutter_text_set_color (CLUTTER_TEXT (child), color);
+    }
+}
+
+static void end_notify (ClutterTimeline *timeline, ChannelSelector *selector)
+{
+    static ClutterColor disabled_text_color = UNACTIVE_CHANNEL_COLOR;
+
+    if (selector->priv->notify_animation == NULL)
+        return;
+
+    clutter_timeline_stop (selector->priv->notify_animation);
+    g_object_unref (selector->priv->notify_animation);
+    selector->priv->notify_animation = NULL;
+
+    set_color_to_all (selector, &disabled_text_color);
+}
+
 static gboolean enable_channel (ClutterActor *label, ClutterEvent *event, SelectableOption *option)
 {
     GList *iter;
@@ -140,6 +169,8 @@ static gboolean enable_channel (ClutterActor *label, ClutterEvent *event, Select
         option->chan->enabled = option->selected;
     }
     else {
+        end_notify (NULL, option->parent);
+
         if (option->selected == TRUE) {
             for (iter = option->parent->priv->options; iter; iter = g_list_next (iter)) {
                 other_option = (SelectableOption*) iter->data;
@@ -257,4 +288,28 @@ Channel* channel_selector_get_selected (ChannelSelector *selector)
     }
 
     return NULL;
+}
+
+void channel_selector_notify_unset (ChannelSelector *selector)
+{
+    GList *children;
+    GList *iter;
+    ClutterActor *child;
+    static ClutterColor enabled_text_color = ACTIVE_CHANNEL_COLOR;
+    static ClutterColor disabled_text_color = UNACTIVE_CHANNEL_COLOR;
+
+    if (selector->priv->enable_on_select == TRUE)
+        return;
+
+    selector->priv->notify_animation = clutter_timeline_new (700);
+    children = clutter_container_get_children (CLUTTER_CONTAINER (selector->priv->main));
+
+    for (iter = children; iter; iter = g_list_next (iter)) {
+        child = (ClutterActor*) iter->data;
+        clutter_text_set_color (CLUTTER_TEXT (child), &enabled_text_color);
+        clutter_actor_animate_with_timeline (child, CLUTTER_EASE_OUT_CUBIC, selector->priv->notify_animation, "color", &disabled_text_color, NULL);
+    }
+
+    g_signal_connect (selector->priv->notify_animation, "completed", G_CALLBACK (end_notify), selector);
+    clutter_timeline_start (selector->priv->notify_animation);
 }

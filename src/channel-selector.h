@@ -50,6 +50,7 @@ ClutterActor*   channel_selector_new                ();
 void            channel_selector_set_channels       (ChannelSelector *selector, Channel *channels);
 void            channel_selector_enable_on_select   (ChannelSelector *selector, gboolean enable);
 Channel*        channel_selector_get_selected       (ChannelSelector *selector);
+void            channel_selector_notify_unset       (ChannelSelector *selector);
 
 G_END_DECLS
 
