@@ -35,13 +35,13 @@ typedef struct _ChannelSelectorClass        ChannelSelectorClass;
 
 struct _ChannelSelector
 {
-  ClutterActor              parent_instance;
-  ChannelSelectorPrivate    *priv;
+    ClutterActor                parent_instance;
+    ChannelSelectorPrivate      *priv;
 };
 
 struct _ChannelSelectorClass
 {
-  ClutterActorClass         parent_class;
+    ClutterActorClass           parent_class;
 };
 
 GType           channel_selector_get_type           (void) G_GNUC_CONST;

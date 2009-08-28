@@ -14,6 +14,7 @@ common_cflags = \
 
 common_ldadd = \
 	$(TUXCHAN_LIBS) \
+    -lmagic \
 	$(NULL)
 
 bin_PROGRAMS = tuxchan
@@ -22,8 +23,10 @@ tuxchan_SOURCES = \
     common.h \
     main.c \
     channel-selector.c \
+    editable-text.c \
     icons.h \
-    channel-selector.h
+    channel-selector.h \
+    editable-text.h
 
 tuxchan_CFLAGS = $(common_cflags)
 tuxchan_LDADD = $(common_ldadd)

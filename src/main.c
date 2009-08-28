@@ -19,6 +19,7 @@
 
 #include "common.h"
 #include "channel-selector.h"
+#include "editable-text.h"
 #include "icons.h"
 
 #define WINDOW_WIDTH                300
@@ -124,6 +125,10 @@ typedef struct {
 
 typedef struct {
     ClutterActor    *upload_panel;
+    ClutterActor    *selector;
+    ClutterActor    *subject;
+    ClutterActor    *text;
+    ClutterActor    *file;
 } UploadSection;
 
 typedef struct {
@@ -144,6 +149,12 @@ typedef struct {
     ChanImage       *img;
     Channel         *chan;
 } AsyncOp;
+
+typedef struct {
+    Channel         *chan;
+    gchar           *subject;
+    gchar           *comment;
+} UploadInfo;
 
 static gchar* check_and_create_folder (const gchar *path, gboolean force)
 {
@@ -1028,6 +1039,19 @@ static gboolean switch_images (ClutterActor *actor, ClutterEvent *event, MyData 
     return TRUE;
 }
 
+static void reset_upload_panel (MyData *data)
+{
+    editable_text_go_standby (EDITABLE_TEXT (data->upload.subject));
+    editable_text_go_standby (EDITABLE_TEXT (data->upload.text));
+    editable_text_go_standby (EDITABLE_TEXT (data->upload.file));
+}
+
+static gboolean switch_images_reset_upload (ClutterActor *actor, ClutterEvent *event, MyData *data)
+{
+    reset_upload_panel (data);
+    return switch_images (data->images.images_panel, event, data);
+}
+
 static gboolean switch_away_on_off (ClutterActor *actor, ClutterEvent *event, MyData *data)
 {
     gchar *path;
@@ -1089,23 +1113,196 @@ static ClutterActor* init_config_section (MyData *data)
     return configs;
 }
 
+static void uploaded_file (SoupSession *session, SoupMessage *msg, gpointer userdata)
+{
+    UploadInfo *upload_info;
+
+    if (msg->status_code != SOUP_STATUS_OK)
+        g_warning ("Message unsent, error %d", msg->status_code);
+
+    upload_info = (UploadInfo*) userdata;
+
+    if (upload_info->subject != NULL)
+        g_free (upload_info->subject);
+    if (upload_info->comment != NULL)
+        g_free (upload_info->comment);
+
+    g_free (upload_info);
+    g_object_unref (session);
+}
+
+static gchar* check_mimetype (gchar *data, gsize size)
+{
+    gchar *ret;
+    magic_t cookie;
+
+    cookie = magic_open (MAGIC_MIME_TYPE);
+    magic_load (cookie, NULL);
+
+    ret = g_strdup (magic_buffer (cookie, data, size));
+    if (ret == NULL)
+        g_warning ("Unable to retrieve mimetype of the file: %s", magic_error (cookie));
+
+    magic_close (cookie);
+    return ret;
+}
+
+static void upload_image_ready (GObject *source_object, GAsyncResult *res, gpointer userdata)
+{
+    gchar *filename;
+    gchar *uri;
+    gchar *data;
+    gchar *mimetype;
+    gsize size;
+    GError *error;
+    SoupMultipart *part;
+    SoupMessage *message;
+    SoupBuffer *content;
+    SoupSession *session;
+    UploadInfo *upload_info;
+
+    error = NULL;
+    uri = g_file_get_path (G_FILE (source_object));
+
+    if (g_file_load_contents_finish (G_FILE (source_object), res, &data, &size, NULL, &error) == FALSE) {
+        g_warning ("Unable to download %s: %s", uri, error->message);
+        g_free (uri);
+        g_error_free (error);
+        return;
+    }
+
+    upload_info = (UploadInfo*) userdata;
+    filename = g_path_get_basename (uri);
+    g_free (uri);
+
+    part = soup_multipart_new (SOUP_FORM_MIME_TYPE_MULTIPART);
+    mimetype = check_mimetype (data, size);
+    content = soup_buffer_new (SOUP_MEMORY_TEMPORARY, data, size);
+    soup_multipart_append_form_file (part, "upfile", filename, mimetype, content);
+
+    soup_multipart_append_form_string (part, "MAX_FILE_SIZE", "8388608");
+    soup_multipart_append_form_string (part, "mode", "regist");
+    soup_multipart_append_form_string (part, "name", "");
+    soup_multipart_append_form_string (part, "email", "");
+    soup_multipart_append_form_string (part, "pwd", "foo");
+
+    if (upload_info->subject != NULL)
+        soup_multipart_append_form_string (part, "sub", upload_info->subject);
+    else
+        soup_multipart_append_form_string (part, "sub", "");
+
+    if (upload_info->comment != NULL)
+        soup_multipart_append_form_string (part, "com", upload_info->comment);
+    else
+        soup_multipart_append_form_string (part, "com", "");
+
+    uri = g_strdup_printf ("http://nov.4chan.org/%s/imgboard.php", upload_info->chan->name);
+    message = soup_form_request_new_from_multipart (uri, part);
+
+    session = soup_session_async_new ();
+    g_object_set (G_OBJECT (session), SOUP_SESSION_USER_AGENT, "TuxChan", NULL);
+    soup_session_queue_message (session, message, uploaded_file, upload_info);
+
+    soup_multipart_free (part);
+    g_free (data);
+    g_free (mimetype);
+    g_free (uri);
+    g_free (filename);
+}
+
+static gboolean upload_image (ClutterActor *actor, ClutterEvent *event, MyData *data)
+{
+    const gchar *uri;
+    GFile *file;
+    UploadInfo *upload_info;
+
+    if (channel_selector_get_selected (CHANNEL_SELECTOR (data->upload.selector)) == NULL) {
+        g_warning ("Undefined target channel");
+        goto exit_func;
+    }
+
+    if (editable_text_is_set (EDITABLE_TEXT (data->upload.file)) == FALSE) {
+        g_warning ("Undefined target file to upload");
+        goto exit_func;
+    }
+
+    uri = clutter_text_get_text (CLUTTER_TEXT (data->upload.file));
+    file = g_file_new_for_path (uri);
+
+    upload_info = g_new0 (UploadInfo, 1);
+
+    if (editable_text_is_set (EDITABLE_TEXT (data->upload.subject)) == TRUE)
+        upload_info->subject = g_strdup (clutter_text_get_text (CLUTTER_TEXT (data->upload.subject)));
+    else
+        upload_info->subject = NULL;
+
+    if (editable_text_is_set (EDITABLE_TEXT (data->upload.text)) == TRUE)
+        upload_info->comment = g_strdup (clutter_text_get_text (CLUTTER_TEXT (data->upload.text)));
+    else
+        upload_info->comment = NULL;
+
+    upload_info->chan = channel_selector_get_selected (CHANNEL_SELECTOR (data->upload.selector));
+
+    g_file_load_contents_async (file, NULL, upload_image_ready, upload_info);
+
+exit_func:
+    switch_images_reset_upload (actor, event, data);
+    return TRUE;
+}
+
 static ClutterActor* init_upload_section (MyData *data)
 {
     gfloat width;
     gfloat height;
     ClutterActor *upload;
-    ClutterActor *label;
-    static ClutterColor disabled_text_color = UNACTIVE_CHANNEL_COLOR;
+    ClutterActor *selector;
+    ClutterActor *subject;
+    ClutterActor *text;
+    ClutterActor *file;
+    static ClutterColor enabled_text_color = ACTIVE_CHANNEL_COLOR;
 
     upload = clutter_group_new ();
     data->upload.upload_panel = upload;
 
-    label = clutter_text_new_full (CONF_FONT, "Not implemented yet", &disabled_text_color);
-    clutter_actor_get_size (label, &width, &height);
-    clutter_actor_set_position (label, (WINDOW_WIDTH - width) / 2, (WINDOW_HEIGHT - height) / 2);
-    clutter_container_add_actor (CLUTTER_CONTAINER (upload), label);
+    selector = channel_selector_new ();
+    clutter_actor_set_position (selector, 0, 0);
+    channel_selector_enable_on_select (CHANNEL_SELECTOR (selector), FALSE);
+    channel_selector_set_channels (CHANNEL_SELECTOR (selector), data->channels);
+    clutter_container_add_actor (CLUTTER_CONTAINER (upload), selector);
+    clutter_actor_set_reactive (selector, TRUE);
+    data->upload.selector = selector;
 
-    do_icon_button (upload, BackIcon, 2, WINDOW_HEIGHT - 30, G_CALLBACK (switch_images), data);
+    height = 150;
+    width = WINDOW_WIDTH - 40;
+
+    subject = editable_text_new (INPUT_FONT, "Subject", &enabled_text_color);
+    clutter_actor_set_position (subject, 20, height);
+    clutter_actor_set_size (subject, width, 25);
+    clutter_text_set_max_length (CLUTTER_TEXT (subject), 70);
+    height += 35;
+    clutter_container_add_actor (CLUTTER_CONTAINER (upload), subject);
+    data->upload.subject = subject;
+
+    text = editable_text_new (INPUT_FONT, "Comment", &enabled_text_color);
+    clutter_actor_set_position (text, 20, height);
+    clutter_actor_set_size (text, width, 125);
+    clutter_text_set_max_length (CLUTTER_TEXT (text), 330);
+    height += 135;
+    clutter_container_add_actor (CLUTTER_CONTAINER (upload), text);
+    data->upload.text = text;
+
+    file = editable_text_new (INPUT_FONT, "File", &enabled_text_color);
+    clutter_actor_set_position (file, 20, height);
+    clutter_actor_set_size (file, width, 25);
+    clutter_text_set_max_length (CLUTTER_TEXT (file), 70);
+    height += 35;
+    clutter_container_add_actor (CLUTTER_CONTAINER (upload), file);
+    data->upload.file = file;
+
+    reset_upload_panel (data);
+
+    do_icon_button (upload, DoneIcon, 2, WINDOW_HEIGHT - 60, G_CALLBACK (upload_image), data);
+    do_icon_button (upload, BackIcon, 2, WINDOW_HEIGHT - 30, G_CALLBACK (switch_images_reset_upload), data);
     return upload;
 }
 
@@ -1141,6 +1338,7 @@ int main (int argc, char **argv)
 {
     MyData conf;
 
+    g_thread_init (NULL);
     clutter_init (&argc, &argv);
     g_set_application_name ("TuxChan");
 

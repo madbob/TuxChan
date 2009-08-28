@@ -28,8 +28,11 @@
 #include <gio/gio.h>
 #include <gdk-pixbuf/gdk-pixbuf.h>
 #include <clutter/clutter.h>
+#include <libsoup/soup.h>
+#include <magic.h>
 
 #define CONF_FONT                   "Mono Bold 15px"
+#define INPUT_FONT                  "Mono Bold 12px"
 #define TEXT_COLOR                  {0x33, 0xFF, 0x33, 0xFF}
 #define ACTIVE_CHANNEL_COLOR        TEXT_COLOR
 #define UNACTIVE_CHANNEL_COLOR      {0x11, 0x77, 0x11, 0xFF}
