@@ -47,6 +47,7 @@ struct _FileSelectorClass
 GType           file_selector_get_type      (void) G_GNUC_CONST;
 ClutterActor*   file_selector_new           (const gchar *font_name, const ClutterColor *color);
 
+void            file_selector_set_uri       (FileSelector *selector, gchar *uri);
 void            file_selector_go_standby    (FileSelector *selector);
 gboolean        file_selector_is_set        (FileSelector *selector);
 void            file_selector_notify_unset  (FileSelector *selector);

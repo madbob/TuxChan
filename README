@@ -20,6 +20,7 @@ TuxChan depends on:
   - libgio >= 2.20.3
   - libgtk2 >= 2.10.0
   - Clutter >= 1.0.0
+  - Clutter-GTK >= 0.10.2
   - libsoup >= 2.26.2
   - libmagic
 

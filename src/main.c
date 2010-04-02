@@ -288,7 +288,7 @@ static gchar* dump_async_contents (GFile *src, GAsyncResult *res, gchar *tmp_dat
 
     path = g_strdup_printf ("%s/tuxchan_fullsize_image_XXXXXX", tmp_data_folder);
     fd = mkstemp (path);
-    write (fd, contents, size);
+    (void) write (fd, contents, size);
     close (fd);
 
     return path;
@@ -1125,6 +1125,8 @@ static void uploaded_file (SoupSession *session, SoupMessage *msg, gpointer user
 
     if (msg->status_code != SOUP_STATUS_OK)
         g_warning ("Message unsent, error %d", msg->status_code);
+    else
+        printf ("Message sent, reply: %s\n", msg->response_body->data);
 
     upload_info = (UploadInfo*) userdata;
 
@@ -1168,7 +1170,7 @@ static void upload_image_ready (GObject *source_object, GAsyncResult *res, gpoin
     UploadInfo *upload_info;
 
     error = NULL;
-    uri = g_file_get_path (G_FILE (source_object));
+    uri = g_file_get_uri (G_FILE (source_object));
 
     if (g_file_load_contents_finish (G_FILE (source_object), res, &data, &size, NULL, &error) == FALSE) {
         g_warning ("Unable to download %s: %s", uri, error->message);
@@ -1178,34 +1180,52 @@ static void upload_image_ready (GObject *source_object, GAsyncResult *res, gpoin
     }
 
     upload_info = (UploadInfo*) userdata;
-    filename = g_path_get_basename (uri);
-    g_free (uri);
 
-    part = soup_multipart_new (SOUP_FORM_MIME_TYPE_MULTIPART);
     mimetype = check_mimetype (data, size);
-    content = soup_buffer_new (SOUP_MEMORY_TEMPORARY, data, size);
-    soup_multipart_append_form_file (part, "upfile", filename, mimetype, content);
+    filename = NULL;
 
-    soup_multipart_append_form_string (part, "MAX_FILE_SIZE", "8388608");
-    soup_multipart_append_form_string (part, "mode", "regist");
-    soup_multipart_append_form_string (part, "pwd", "foo");
+    if (strcmp (mimetype, "image/gif") == 0)
+        filename = "file.gif";
+    else if (strcmp (mimetype, "image/png") == 0)
+        filename = "file.png";
+    else if (strcmp (mimetype, "image/jpeg") == 0)
+        filename = "file.jpeg";
 
-    if (upload_info->subject != NULL)
-        soup_multipart_append_form_string (part, "sub", upload_info->subject);
+    if (filename == NULL) {
+        g_warning ("Invalid file format. Only GIF, PNG and JPEG images allowed.");
+    }
+    else {
+        part = soup_multipart_new (SOUP_FORM_MIME_TYPE_MULTIPART);
 
-    if (upload_info->comment != NULL)
-        soup_multipart_append_form_string (part, "com", upload_info->comment);
+        content = soup_buffer_new (SOUP_MEMORY_TEMPORARY, data, size);
+        soup_multipart_append_form_file (part, "upfile", filename, mimetype, content);
+        soup_multipart_append_form_string (part, "MAX_FILE_SIZE", "8388608");
+        soup_multipart_append_form_string (part, "mode", "regist");
+        soup_multipart_append_form_string (part, "pwd", "foo");
+        soup_multipart_append_form_string (part, "name", "TuxChan");
+        soup_multipart_append_form_string (part, "email", "fake@mail.com");
 
-    message = soup_form_request_new_from_multipart (upload_info->chan->upload_server, part);
+        if (upload_info->subject != NULL && strlen (upload_info->subject) > 0)
+            soup_multipart_append_form_string (part, "sub", upload_info->subject);
+        else
+            soup_multipart_append_form_string (part, "sub", "No Subject");
 
-    session = soup_session_async_new ();
-    g_object_set (G_OBJECT (session), SOUP_SESSION_USER_AGENT, "TuxChan", NULL);
-    soup_session_queue_message (session, message, uploaded_file, upload_info);
+        if (upload_info->comment != NULL && strlen (upload_info->comment) > 0)
+            soup_multipart_append_form_string (part, "com", upload_info->comment);
+        else
+            soup_multipart_append_form_string (part, "com", "No Comment");
 
-    soup_multipart_free (part);
+        message = soup_form_request_new_from_multipart (upload_info->chan->upload_server, part);
+
+        session = soup_session_async_new ();
+        g_object_set (G_OBJECT (session), SOUP_SESSION_USER_AGENT, "TuxChan", NULL);
+        soup_session_queue_message (session, message, uploaded_file, upload_info);
+
+        soup_multipart_free (part);
+    }
+
     g_free (data);
     g_free (mimetype);
-    g_free (filename);
 }
 
 static gboolean upload_image (ClutterActor *actor, ClutterEvent *event, MyData *data)
@@ -1276,7 +1296,6 @@ static ClutterActor* init_upload_section (MyData *data)
     subject = editable_text_new (INPUT_FONT, "Subject", &enabled_text_color);
     clutter_actor_set_position (subject, 20, height);
     clutter_actor_set_size (subject, width, 25);
-    clutter_text_set_max_length (CLUTTER_TEXT (subject), 70);
     height += 35;
     clutter_container_add_actor (CLUTTER_CONTAINER (upload), subject);
     data->upload.subject = subject;
@@ -1284,7 +1303,6 @@ static ClutterActor* init_upload_section (MyData *data)
     text = editable_text_new (INPUT_FONT, "Comment", &enabled_text_color);
     clutter_actor_set_position (text, 20, height);
     clutter_actor_set_size (text, width, 125);
-    clutter_text_set_max_length (CLUTTER_TEXT (text), 330);
     height += 135;
     clutter_container_add_actor (CLUTTER_CONTAINER (upload), text);
     data->upload.text = text;
@@ -1292,7 +1310,6 @@ static ClutterActor* init_upload_section (MyData *data)
     file = file_selector_new (INPUT_FONT, &enabled_text_color);
     clutter_actor_set_position (file, 20, height);
     clutter_actor_set_size (file, width, 25);
-    clutter_text_set_max_length (CLUTTER_TEXT (file), 70);
     height += 35;
     clutter_container_add_actor (CLUTTER_CONTAINER (upload), file);
     data->upload.file = file;
@@ -1304,17 +1321,70 @@ static ClutterActor* init_upload_section (MyData *data)
     return upload;
 }
 
+static void drop_received (GtkWidget *widget, GdkDragContext *context, gint x, gint y, GtkSelectionData *selection_data, guint target_type, guint time, gpointer user_data)
+{
+    gchar *sdata;
+    gboolean dnd_success;
+    MyData *data;
+
+    dnd_success = FALSE;
+    data = user_data;
+
+    if ((selection_data != NULL) && (selection_data->length >= 0)) {
+        sdata = (gchar*) selection_data->data;
+        file_selector_set_uri (FILE_SELECTOR (data->upload.file), sdata);
+        show_panel (data->upload.upload_panel, data);
+        dnd_success = TRUE;
+    }
+
+    gtk_drag_finish (context, dnd_success, FALSE, time);
+}
+
+static gboolean manage_drops (GtkWidget *widget, GdkDragContext *drag_context, gint x, gint y, guint time, gpointer user_data)
+{
+    GdkAtom target_type;
+
+    if (drag_context->targets) {
+        target_type = GDK_POINTER_TO_ATOM (g_list_nth_data (drag_context->targets, 0));
+        gtk_drag_get_data (widget, drag_context, target_type, time);
+        return TRUE;
+    }
+    else {
+        return FALSE;
+    }
+}
+
 static void init_graphics (MyData *data)
 {
+    GtkWidget *window;
+    GtkWidget *emb;
     ClutterActor *stage;
     ClutterActor *panel;
     ClutterColor stage_color = STAGE_COLOR;
 
-    stage = clutter_stage_get_default ();
-    clutter_stage_set_title (CLUTTER_STAGE (stage), "TuxChan");
+    GtkTargetEntry targets [] = {
+        { "image/gif", GTK_TARGET_OTHER_APP, 0 },
+        { "image/jpg", GTK_TARGET_OTHER_APP, 0 },
+        { "image/png", GTK_TARGET_OTHER_APP, 0 },
+        { "text/uri-list", GTK_TARGET_OTHER_APP, 0 }
+    };
+
+    window = gtk_window_new (GTK_WINDOW_TOPLEVEL);
+    gtk_window_resize (GTK_WINDOW (window), WINDOW_WIDTH, WINDOW_HEIGHT);
+    gtk_window_set_default_size (GTK_WINDOW (window), WINDOW_WIDTH, WINDOW_HEIGHT);
+    gtk_widget_set_size_request (window, WINDOW_WIDTH, WINDOW_HEIGHT);
+
+    emb = gtk_clutter_embed_new ();
+    gtk_drag_dest_set (emb, GTK_DEST_DEFAULT_ALL, targets, 4, GDK_ACTION_COPY);
+    g_signal_connect (emb, "drag-data-received", G_CALLBACK (drop_received), data);
+    g_signal_connect (emb, "drag-drop", G_CALLBACK (manage_drops), NULL);
+    gtk_container_add (GTK_CONTAINER (window), emb);
+
+    g_signal_connect (window, "destroy", G_CALLBACK (gtk_main_quit), NULL);
+
+    stage = gtk_clutter_embed_get_stage (GTK_CLUTTER_EMBED (emb));
     clutter_stage_set_color (CLUTTER_STAGE (stage), &stage_color);
     clutter_actor_set_size (stage, WINDOW_WIDTH, WINDOW_HEIGHT);
-    g_signal_connect (stage, "destroy", G_CALLBACK (clutter_main_quit), NULL);
 
     panel = init_images_section (data);
     clutter_actor_set_position (panel, 0, 0);
@@ -1329,7 +1399,9 @@ static void init_graphics (MyData *data)
     clutter_actor_set_position (panel, WINDOW_WIDTH, 0);
     clutter_container_add_actor (CLUTTER_CONTAINER (stage), panel);
 
-    clutter_actor_show_all (stage);
+    gtk_widget_show_all (window);
+
+    gtk_window_set_resizable (GTK_WINDOW (window), FALSE);
 }
 
 int main (int argc, char **argv)
@@ -1337,8 +1409,7 @@ int main (int argc, char **argv)
     MyData conf;
 
     g_thread_init (NULL);
-    gtk_init (&argc, &argv);
-    clutter_init (&argc, &argv);
+    gtk_clutter_init (&argc, &argv);
     g_set_application_name ("TuxChan");
 
     memset (&conf, 0, sizeof (MyData));
@@ -1348,7 +1419,7 @@ int main (int argc, char **argv)
     sync_contents (&conf);
     g_timeout_add (REFRESH_TIMEOUT, sync_contents, &conf);
 
-    clutter_main ();
+    gtk_main ();
 
     destroy_conf (&conf);
     exit (0);

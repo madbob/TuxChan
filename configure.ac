@@ -17,6 +17,7 @@ m4_define([lt_age],
 
 m4_define([glib_req_version], [2.16])
 m4_define([clutter_req_version], [1.0.0])
+m4_define([cluttergtk_req_version], [0.10.2])
 m4_define([gtk_req_version], [2.10.0])
 m4_define([soup_req_version], [2.26.2])
 
@@ -52,6 +53,7 @@ dnl tuxchan checks
 PKG_CHECK_MODULES(TUXCHAN,
                   libsoup-2.4 >= soup_req_version dnl
                   gtk+-2.0 >= gtk_req_version dnl
+                  clutter-gtk-0.10 >= cluttergtk_req_version dnl
                   clutter-1.0 >= clutter_req_version)
 AC_SUBST(TUXCHAN_CFLAGS)
 AC_SUBST(TUXCHAN_LIBS)

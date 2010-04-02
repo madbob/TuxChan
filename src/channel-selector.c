@@ -86,7 +86,7 @@ static void channel_selector_finalize (GObject *gobject)
     ChannelSelector *selector;
 
     selector = CHANNEL_SELECTOR (gobject);
-    g_object_unref (selector->priv->main);
+    // g_object_unref (selector->priv->main);
     g_list_free (selector->priv->options);
 
     G_OBJECT_CLASS (channel_selector_parent_class)->finalize (gobject);

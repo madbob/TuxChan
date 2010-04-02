@@ -109,13 +109,24 @@ static void remove_standby_text (ClutterActor *actor, gpointer useless)
     }
 }
 
+static void set_standby_text (ClutterActor *actor, gpointer useless)
+{
+    EditableText *editable;
+
+    editable = EDITABLE_TEXT (actor);
+    if (strcmp (clutter_text_get_text (CLUTTER_TEXT (editable)), ""))
+        editable->priv->is_standby = TRUE;
+}
+
 static void editable_text_init (EditableText *actor)
 {
     actor->priv = EDITABLE_TEXT_GET_PRIVATE (actor);
     actor->priv->is_standby = TRUE;
     clutter_text_set_editable (CLUTTER_TEXT (actor), TRUE);
+    clutter_text_set_max_length (CLUTTER_TEXT (actor), 1000);
     clutter_actor_set_reactive (CLUTTER_ACTOR (actor), TRUE);
     g_signal_connect (actor, "key-focus-in", G_CALLBACK (remove_standby_text), NULL);
+    g_signal_connect (actor, "key-focus-out", G_CALLBACK (set_standby_text), NULL);
 }
 
 ClutterActor* editable_text_new (const gchar *font_name, const gchar *standby, const ClutterColor *color) {

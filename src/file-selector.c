@@ -64,8 +64,9 @@ static void show_dialog (ClutterActor *actor, gpointer useless)
         clutter_text_set_text (CLUTTER_TEXT (selector), filename);
         g_free (filename);
         selector->priv->is_standby = FALSE;
-        gtk_widget_hide (selector->priv->dialog);
     }
+
+    gtk_widget_hide (selector->priv->dialog);
 }
 
 static void file_selector_init (FileSelector *actor)
@@ -78,10 +79,17 @@ static void file_selector_init (FileSelector *actor)
 
     clutter_actor_set_reactive (CLUTTER_ACTOR (actor), TRUE);
     g_signal_connect (actor, "button-press-event", G_CALLBACK (show_dialog), NULL);
+    clutter_text_set_max_length (CLUTTER_TEXT (actor), 0);
 }
 
 ClutterActor* file_selector_new (const gchar *font_name, const ClutterColor *color) {
     return g_object_new (FILE_SELECTOR_TYPE, "font-name", font_name, "color", color, NULL);
+}
+
+void file_selector_set_uri (FileSelector *selector, gchar *uri)
+{
+    selector->priv->is_standby = FALSE;
+    clutter_text_set_text (CLUTTER_TEXT (selector), uri);
 }
 
 void file_selector_go_standby (FileSelector *selector)

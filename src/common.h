@@ -29,6 +29,7 @@
 #include <gdk-pixbuf/gdk-pixbuf.h>
 #include <gtk/gtk.h>
 #include <clutter/clutter.h>
+#include <clutter-gtk/clutter-gtk.h>
 #include <libsoup/soup.h>
 #include <magic.h>
 
